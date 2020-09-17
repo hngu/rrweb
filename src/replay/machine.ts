@@ -102,6 +102,10 @@ export function createPlayerService(
               target: 'paused',
               actions: ['resetLastPlayedEvent', 'pause'],
             },
+            ADD_EVENT: {
+              target: 'playing',
+              actions: ['addEvent'],
+            },
           },
         },
         paused: {
@@ -114,6 +118,14 @@ export function createPlayerService(
               target: 'paused',
               actions: 'castEvent',
             },
+            TO_LIVE: {
+              target: 'live',
+              actions: ['startLive'],
+            },
+            ADD_EVENT: {
+              target: 'paused',
+              actions: ['addEvent'],
+            },
           },
         },
         live: {
@@ -121,6 +133,10 @@ export function createPlayerService(
             ADD_EVENT: {
               target: 'live',
               actions: ['addEvent'],
+            },
+            CAST_EVENT: {
+              target: 'live',
+              actions: ['castEvent'],
             },
           },
         },
@@ -224,6 +240,9 @@ export function createPlayerService(
                 },
                 delay: event.delay!,
               });
+              if (!timer.isActive()) {
+                timer.start();
+              }
             }
           }
           return { ...ctx, events };
