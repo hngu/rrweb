@@ -7,6 +7,8 @@
 
 # rrweb
 
+**[rrweb 社区新的征程](http://www.myriptide.com/rrweb-community-cn/)**
+
 [![Build Status](https://travis-ci.org/rrweb-io/rrweb.svg?branch=master)](https://travis-ci.org/rrweb-io/rrweb)
 [![Join the chat at https://gitter.im/rrweb-io/rrweb](https://badges.gitter.im/rrweb-io/rrweb.svg)](https://gitter.im/rrweb-io/rrweb?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 ![total gzip size](https://img.badgesize.io/https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.js?compression=gzip&label=total%20gzip%20size)
@@ -21,6 +23,8 @@ rrweb 是 'record and replay the web' 的简写，旨在利用现代浏览器所
 ## 指南
 
 [**📚 rrweb 使用指南 📚**](./guide.zh_CN.md)
+
+[**场景示例**](./docs/recipes/index.zh_CN.md)
 
 ## 项目结构
 

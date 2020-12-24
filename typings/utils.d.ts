@@ -10,9 +10,10 @@ export declare function patch(source: {
 export declare function getWindowHeight(): number;
 export declare function getWindowWidth(): number;
 export declare function isBlocked(node: Node | null, blockClass: blockClass): boolean;
+export declare function isIgnored(n: Node | INode): boolean;
 export declare function isAncestorRemoved(target: INode): boolean;
 export declare function isTouchEvent(event: MouseEvent | TouchEvent): event is TouchEvent;
-export declare function polyfill(): void;
+export declare function polyfill(win?: Window & typeof globalThis): void;
 export declare function needCastInSyncMode(event: eventWithTime): boolean;
 export declare type TreeNode = {
     id: number;
@@ -45,3 +46,11 @@ export declare class TreeIndex {
     };
     private reset;
 }
+declare type ResolveTree = {
+    value: addedNodeMutation;
+    children: ResolveTree[];
+    parent: ResolveTree | null;
+};
+export declare function queueToResolveTrees(queue: addedNodeMutation[]): ResolveTree[];
+export declare function iterateResolveTree(tree: ResolveTree, cb: (mutation: addedNodeMutation) => unknown): void;
+export {};

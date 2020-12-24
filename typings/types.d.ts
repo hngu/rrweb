@@ -1,5 +1,6 @@
-import { serializedNodeWithId, idNodeMap, INode, MaskInputOptions } from 'rrweb-snapshot';
+import { serializedNodeWithId, idNodeMap, INode, MaskInputOptions, SlimDOMOptions } from 'rrweb-snapshot';
 import { PackFn, UnpackFn } from './packer/base';
+import { FontFaceDescriptors } from 'css-font-loading-module';
 export declare enum EventType {
     DomContentLoaded = 0,
     Load = 1,
@@ -38,6 +39,10 @@ export declare type metaEvent = {
         height: number;
     };
 };
+export declare type logEvent = {
+    type: EventType.IncrementalSnapshot;
+    data: incrementalData;
+};
 export declare type customEvent<T = unknown> = {
     type: EventType.Custom;
     data: {
@@ -56,7 +61,9 @@ export declare enum IncrementalSource {
     TouchMove = 6,
     MediaInteraction = 7,
     StyleSheetRule = 8,
-    CanvasMutation = 9
+    CanvasMutation = 9,
+    Font = 10,
+    Log = 11
 }
 export declare type mutationData = {
     source: IncrementalSource.Mutation;
@@ -87,8 +94,14 @@ export declare type styleSheetRuleData = {
 export declare type canvasMutationData = {
     source: IncrementalSource.CanvasMutation;
 } & canvasMutationParam;
-export declare type incrementalData = mutationData | mousemoveData | mouseInteractionData | scrollData | viewportResizeData | inputData | mediaInteractionData | styleSheetRuleData | canvasMutationData;
-export declare type event = domContentLoadedEvent | loadedEvent | fullSnapshotEvent | incrementalSnapshotEvent | metaEvent | customEvent;
+export declare type fontData = {
+    source: IncrementalSource.Font;
+} & fontParam;
+export declare type logData = {
+    source: IncrementalSource.Log;
+} & LogParam;
+export declare type incrementalData = mutationData | mousemoveData | mouseInteractionData | scrollData | viewportResizeData | inputData | mediaInteractionData | styleSheetRuleData | canvasMutationData | fontData | logData;
+export declare type event = domContentLoadedEvent | loadedEvent | fullSnapshotEvent | incrementalSnapshotEvent | metaEvent | logEvent | customEvent;
 export declare type eventWithTime = event & {
     timestamp: number;
     delay?: number;
@@ -105,15 +118,20 @@ export declare type recordOptions<T> = {
     checkoutEveryNth?: number;
     checkoutEveryNms?: number;
     blockClass?: blockClass;
+    blockSelector?: string;
     ignoreClass?: string;
     maskAllInputs?: boolean;
     maskInputOptions?: MaskInputOptions;
+    maskInputFn?: MaskInputFn;
+    slimDOMOptions?: SlimDOMOptions | 'all' | true;
     inlineStylesheet?: boolean;
     hooks?: hooksParam;
     packFn?: PackFn;
     sampling?: SamplingStrategy;
     recordCanvas?: boolean;
+    collectFonts?: boolean;
     mousemoveWait?: number;
+    recordLog?: boolean | LogRecordOptions;
 };
 export declare type observerParam = {
     mutationCb: mutationCallBack;
@@ -124,13 +142,20 @@ export declare type observerParam = {
     inputCb: inputCallback;
     mediaInteractionCb: mediaInteractionCallback;
     blockClass: blockClass;
+    blockSelector: string | null;
     ignoreClass: string;
     maskInputOptions: MaskInputOptions;
+    maskInputFn?: MaskInputFn;
     inlineStylesheet: boolean;
     styleSheetRuleCb: styleSheetRuleCallback;
     canvasMutationCb: canvasMutationCallback;
+    fontCb: fontCallback;
+    logCb: logCallback;
+    logOptions: LogRecordOptions;
     sampling: SamplingStrategy;
     recordCanvas: boolean;
+    collectFonts: boolean;
+    slimDOMOptions: SlimDOMOptions;
 };
 export declare type hooksParam = {
     mutation?: mutationCallBack;
@@ -142,6 +167,8 @@ export declare type hooksParam = {
     mediaInteaction?: mediaInteractionCallback;
     styleSheetRule?: styleSheetRuleCallback;
     canvasMutation?: canvasMutationCallback;
+    font?: fontCallback;
+    log?: logCallback;
 };
 export declare type mutationRecord = {
     type: string;
@@ -240,6 +267,42 @@ export declare type canvasMutationParam = {
     args: Array<unknown>;
     setter?: true;
 };
+export declare type fontParam = {
+    family: string;
+    fontSource: string;
+    buffer: boolean;
+    descriptors?: FontFaceDescriptors;
+};
+export declare type LogLevel = 'assert' | 'clear' | 'count' | 'countReset' | 'debug' | 'dir' | 'dirxml' | 'error' | 'group' | 'groupCollapsed' | 'groupEnd' | 'info' | 'log' | 'table' | 'time' | 'timeEnd' | 'timeLog' | 'trace' | 'warn';
+export declare type Logger = {
+    assert?: (value: any, message?: string, ...optionalParams: any[]) => void;
+    clear?: () => void;
+    count?: (label?: string) => void;
+    countReset?: (label?: string) => void;
+    debug?: (message?: any, ...optionalParams: any[]) => void;
+    dir?: (obj: any, options?: NodeJS.InspectOptions) => void;
+    dirxml?: (...data: any[]) => void;
+    error?: (message?: any, ...optionalParams: any[]) => void;
+    group?: (...label: any[]) => void;
+    groupCollapsed?: (label?: any[]) => void;
+    groupEnd?: () => void;
+    info?: (message?: any, ...optionalParams: any[]) => void;
+    log?: (message?: any, ...optionalParams: any[]) => void;
+    table?: (tabularData: any, properties?: ReadonlyArray<string>) => void;
+    time?: (label?: string) => void;
+    timeEnd?: (label?: string) => void;
+    timeLog?: (label?: string, ...data: any[]) => void;
+    trace?: (message?: any, ...optionalParams: any[]) => void;
+    warn?: (message?: any, ...optionalParams: any[]) => void;
+};
+export declare type ReplayLogger = Partial<Record<LogLevel, (data: logData) => void>>;
+export declare type LogParam = {
+    level: LogLevel;
+    trace: Array<string>;
+    payload: Array<string>;
+};
+export declare type fontCallback = (p: fontParam) => void;
+export declare type logCallback = (p: LogParam) => void;
 export declare type viewportResizeDimention = {
     width: number;
     height: number;
@@ -286,6 +349,7 @@ export declare type playerConfig = {
     insertStyleRules: string[];
     triggerFocus: boolean;
     UNSAFE_replayCanvas: boolean;
+    pauseAnimation?: boolean;
     mouseTail: boolean | {
         duration?: number;
         lineCap?: string;
@@ -293,6 +357,11 @@ export declare type playerConfig = {
         strokeStyle?: string;
     };
     unpackFn?: UnpackFn;
+    logConfig: LogReplayConfig;
+};
+export declare type LogReplayConfig = {
+    level?: Array<LogLevel> | undefined;
+    replayLogger: ReplayLogger | undefined;
 };
 export declare type playerMetaData = {
     startTime: number;
@@ -334,4 +403,18 @@ export declare enum ReplayerEvents {
     Flush = "flush",
     StateChange = "state-change"
 }
+export declare type MaskInputFn = (text: string) => string;
+export declare type ElementState = {
+    scroll?: [number, number];
+};
+export declare type StringifyOptions = {
+    stringLengthLimit?: number;
+    numOfKeysLimit: number;
+};
+export declare type LogRecordOptions = {
+    level?: Array<LogLevel> | undefined;
+    lengthThreshold?: number;
+    stringifyOptions?: StringifyOptions;
+    logger?: Logger;
+};
 export {};
